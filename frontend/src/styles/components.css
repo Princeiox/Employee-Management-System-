@@ -1,0 +1,52 @@
+/* Component-specific custom styles */
+
+/* Stat Cards in Dashboard and Reports */
+.stat-card-glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-glow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 100% 0%, var(--primary-hover), transparent 70%);
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+/* Punch Button Animation */
+.punch-btn-pulse {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Glass Effect for Overlays */
+.glass-overlay {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Custom Table Shadows */
+.table-container {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .table-container {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
