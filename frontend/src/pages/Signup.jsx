@@ -85,7 +85,6 @@ const Signup = () => {
                                 onChange={handleChange}
                                 placeholder="Create a strong password"
                                 required
-                                autoComplete="new-password"
                             />
                         </div>
 

@@ -26,7 +26,7 @@ export const StatCard = ({ title, label, value, icon: Icon, color = "bg-blue-600
 /**
  * Shared Password Input with visibility toggle
  */
-export const PasswordInput = ({ value, onChange, placeholder, name, label, required = true, autoComplete = "current-password" }) => {
+export const PasswordInput = ({ value, onChange, placeholder, name, label, required = true }) => {
     const [show, setShow] = useState(false);
 
     return (
@@ -38,7 +38,6 @@ export const PasswordInput = ({ value, onChange, placeholder, name, label, requi
                     name={name}
                     value={value}
                     onChange={onChange}
-                    autoComplete={autoComplete}
                     className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 outline-none dark:border-slate-700 bg-[var(--input-bg)] text-[var(--text-primary)] pr-10"
                     placeholder={placeholder}
                     required={required}
