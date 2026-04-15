@@ -14,10 +14,17 @@ app = FastAPI(
 )
 
 # CORS
-# CORS
+origins = [
+    "https://employee-management-system-git-main-princeioxs-projects.vercel.app",
+    "https://employee-management-system-princeioxs-projects.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex="https?://.*",  # Allow any origin (http/https)
+    allow_origins=origins,
+    allow_origin_regex=r"https://employee-management-system-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
