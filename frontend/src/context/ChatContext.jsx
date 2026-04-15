@@ -75,7 +75,9 @@ export const ChatProvider = ({ children }) => {
             return;
         }
 
-        const ws = new WebSocket(`ws://${window.location.hostname}:8000/api/v1/chat/ws?token=${token}`);
+        const apiBase = import.meta.env.VITE_API_URL || "https://employee-management-system-3yhf.onrender.com";
+        const wsUrl = apiBase.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+        const ws = new WebSocket(`${wsUrl}/api/v1/chat/ws?token=${token}`);
 
         ws.onopen = () => {
             console.log('Chat Connected');
