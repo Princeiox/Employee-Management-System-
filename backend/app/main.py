@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.db.database import engine, Base
+from app.db.init_db import init_db
 from app.api.v1 import auth, users, attendance, leaves, tasks, salary, reports, chat, shortcuts
 
 
@@ -13,22 +13,19 @@ app = FastAPI(
     openapi_url=f"/api/v1/openapi.json"
 )
 
-# CORS
-origins = [
-    "https://employee-management-system-git-main-princeioxs-projects.vercel.app",
-    "https://employee-management-system-princeioxs-projects.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"https://employee-management-system-.*\.vercel\.app",
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origin_regex=settings.BACKEND_CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def startup() -> None:
+    init_db()
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
