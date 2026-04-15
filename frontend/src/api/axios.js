@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API = import.meta.env.VITE_API_URL || "https://employee-management-system-3yhf.onrender.com";
+
 const api = axios.create({
-    baseURL: `http://${window.location.hostname}:8000/api/v1`,
+    baseURL: `${API}/api/v1`,
 });
 
 api.interceptors.request.use(
