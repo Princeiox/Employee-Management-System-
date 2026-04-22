@@ -56,7 +56,7 @@ backend/
    uvicorn app.main:app --reload
    ```
 
-The API will be available at `http://localhost:8000`
+The API is available at `https://employee-management-system-fn7d.onrender.com` (Production) or `http://localhost:8000` (Local)
 
 ## API Documentation
 

@@ -78,9 +78,9 @@ Perfect Systems is a modern, full-stack HR management platform designed to strea
    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
-   The API will be available at `http://localhost:8000`
+   The API is available at `https://employee-management-system-fn7d.onrender.com` (Production) or `http://localhost:8000` (Local)
    
-   API Documentation: `http://localhost:8000/docs`
+   API Documentation: `https://employee-management-system-fn7d.onrender.com/docs`
 
 ### Frontend Setup
 
@@ -99,8 +99,7 @@ Perfect Systems is a modern, full-stack HR management platform designed to strea
    npm run dev -- --host
    ```
 
-   The application will be available at `http://localhost:5173`
-   (Or your network IP: `http://192.168.x.x:5173`)
+   The application is available at `https://employee-management-system-princeioxs-projects.vercel.app` (Production) or `http://localhost:5173` (Local)
 
 ## 🔑 Default Login Credentials
 
@@ -186,7 +185,7 @@ npm run build
 
 ## 📚 Documentation
 
-- **API Documentation**: Access Swagger UI at `http://localhost:8000/docs`
+- **API Documentation**: Access Swagger UI at `https://employee-management-system-fn7d.onrender.com/docs`
 - **Project Structure**: See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
 - **Quick Start Guide**: See [QUICK_START.md](QUICK_START.md)
 

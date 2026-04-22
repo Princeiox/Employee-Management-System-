@@ -41,7 +41,7 @@ src/
 
 ## 🌐 API Integration
 
-The frontend is configured to connect to the backend at `http://{hostname}:8000/api/v1`. This allows it to work seamlessly on both `localhost` and network IPs.
+The frontend is configured to connect to the backend at `https://employee-management-system-fn7d.onrender.com/api/v1` (Production) or `http://localhost:8000/api/v1` (Local).
 
 ## 🎨 Theme
 
