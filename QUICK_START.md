@@ -33,7 +33,7 @@
 
 4. Configure Database:
    - Ensure PostgreSQL is running
-   - Create a database (e.g., `eulogik_db`)
+   - Create a database (e.g., `perfect_systems_db`)
    - Update `.env` file with your credentials
 
 5. Run the server:

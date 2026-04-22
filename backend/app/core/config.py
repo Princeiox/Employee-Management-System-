@@ -11,7 +11,7 @@ class Settings:
     PROJECT_VERSION: str = "1.0.0"
     
     # Database configuration
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./eulogik.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./perfect_systems.db")
     
     # JWT configuration
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your_super_secret_key_here_change_in_production")

@@ -1,4 +1,4 @@
-# Property of Eulogik Systems - Confidential
+# Property of Perfect Systems - Confidential
 import logging
 
 from fastapi import FastAPI, Request
@@ -43,7 +43,7 @@ api.include_router(shortcuts.router, prefix="/api/v1/shortcuts", tags=["Shortcut
 
 @api.get("/")
 def root():
-    return {"message": "Welcome to Eulogik Organization API"}
+    return {"message": "Welcome to Perfect Systems Organization API"}
 
 api.add_middleware(
     CORSMiddleware,

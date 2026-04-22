@@ -104,7 +104,6 @@ export const ChatProvider = ({ children }) => {
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            console.log('Chat Real-time Engine: Connected');
             if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
         };
 
@@ -116,7 +115,6 @@ export const ChatProvider = ({ children }) => {
         };
 
         ws.onclose = (event) => {
-            console.warn('Chat Real-time Engine: Disconnected', event.reason);
             setSocket(null);
             // Exponential backoff or simple retry
             reconnectTimeout.current = setTimeout(connect, 3000);
