@@ -96,7 +96,7 @@ export const ChatProvider = ({ children }) => {
             return;
         }
 
-        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const apiBase = import.meta.env.VITE_API_URL || "https://employee-management-system-fn7d.onrender.com";
         const wsProtocol = apiBase.startsWith('https') ? 'wss://' : 'ws://';
         const wsHost = apiBase.replace(/^https?:\/\//, '');
         const wsUrl = `${wsProtocol}${wsHost}/api/v1/chat/ws?token=${token}`;
