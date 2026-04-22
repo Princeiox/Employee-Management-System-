@@ -1,19 +1,51 @@
 # Property of Eulogik Systems - Confidential
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.init_db import init_db
 from app.api.v1 import auth, users, attendance, leaves, tasks, salary, reports, chat, shortcuts
 
+logger = logging.getLogger(__name__)
 
-
-app = FastAPI(
+# Initialize FastAPI application with project settings
+api = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
-    openapi_url=f"/api/v1/openapi.json"
+    openapi_url="/api/v1/openapi.json",
+    description="Backend API for Perfect Systems Employee Management Portal"
 )
 
-app.add_middleware(
+# Database initialization on application startup
+@api.on_event("startup")
+def startup() -> None:
+    """Initialize database tables if they don't exist."""
+    init_db()
+
+# Global exception handler for unhandled server-side errors
+@api.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Log unhandled exceptions and return a generic 500 error response."""
+    logger.exception("Unhandled server error on %s %s", request.method, request.url.path, exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+api.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
+api.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+api.include_router(attendance.router, prefix="/api/v1/attendance", tags=["Attendance"])
+api.include_router(leaves.router, prefix="/api/v1/leaves", tags=["Leaves"])
+api.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])
+api.include_router(salary.router, prefix="/api/v1/salary", tags=["Salary"])
+api.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
+api.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
+api.include_router(shortcuts.router, prefix="/api/v1/shortcuts", tags=["Shortcuts"])
+
+@api.get("/")
+def root():
+    return {"message": "Welcome to Eulogik Organization API"}
+
+api.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_origin_regex=settings.BACKEND_CORS_ORIGIN_REGEX,
@@ -22,21 +54,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.on_event("startup")
-def startup() -> None:
-    init_db()
-
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
-app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(attendance.router, prefix="/api/v1/attendance", tags=["Attendance"])
-app.include_router(leaves.router, prefix="/api/v1/leaves", tags=["Leaves"])
-app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])
-app.include_router(salary.router, prefix="/api/v1/salary", tags=["Salary"])
-app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
-app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
-app.include_router(shortcuts.router, prefix="/api/v1/shortcuts", tags=["Shortcuts"])
-
-@app.get("/")
-def root():
-    return {"message": "Welcome to Eulogik Organization API"}
+app = api

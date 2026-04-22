@@ -15,22 +15,30 @@ router = APIRouter()
 
 # --- WebSocket Manager ---
 class ConnectionManager:
+    """
+    Manages active WebSocket connections for real-time messaging.
+    Tracks connected users and facilitates message broadcasting.
+    """
     def __init__(self):
-        # Map user_id -> WebSocket
+        # Dictionary mapping user_id to their active WebSocket connection
         self.active_connections: Dict[int, WebSocket] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket):
+        """Accepts a new connection and registers the user."""
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
     def disconnect(self, user_id: int):
+        """Removes a user's connection from the active tracking map."""
         if user_id in self.active_connections:
             del self.active_connections[user_id]
 
     async def send_personal_message(self, message: dict, user_id: int):
+        """Sends a JSON-encoded message to a specific connected user."""
         if user_id in self.active_connections:
             await self.active_connections[user_id].send_text(json.dumps(message))
 
+# Global singleton for managing connections across the lifecycle
 manager = ConnectionManager()
 
 # --- Endpoints ---
@@ -131,24 +139,28 @@ async def websocket_endpoint(
     token: str = Query(...),
     db: Session = Depends(get_db)
 ):
-    # Verify token
+    """
+    Stateful WebSocket endpoint for real-time bi-directional chat.
+    Requires a valid JWT token via query parameter for authentication.
+    """
+    # Verify authentication token provided in query string
     try:
         payload = jwt.decode(token, security.settings.SECRET_KEY, algorithms=[security.settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            print("WS Error: Email missing in token")
-            await websocket.close(code=4003)
+            await websocket.close(code=4003) # Authentication failed
             return
-    except JWTError as e:
-        print(f"WS Error: Invalid token - {e}")
-        await websocket.close(code=4003)
+    except JWTError:
+        await websocket.close(code=4003) # Invalid or expired token
         return
 
+    # Identify user from database
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
         await websocket.close(code=4003)
         return
 
+    # Register connection in the manager
     await manager.connect(user.id, websocket)
     
     try:

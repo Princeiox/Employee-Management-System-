@@ -3,22 +3,29 @@ import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 import api from '../api/axios';
 
+/**
+ * ChatContext provides real-time messaging capabilities across the application.
+ * It manages WebSocket connections, message history, and unread notifications.
+ */
 const ChatContext = createContext(null);
 
 export const ChatProvider = ({ children }) => {
     const { user } = useAuth();
     const [socket, setSocket] = useState(null);
-    const [messages, setMessages] = useState({}); // user_id -> [message]
-    const [onlineUsers, setOnlineUsers] = useState([]);
-    const [unreadCounts, setUnreadCounts] = useState({}); // userId -> count
+    const [messages, setMessages] = useState({}); // State structure: { userId: [Array of Messages] }
+    const [unreadCounts, setUnreadCounts] = useState({}); // State structure: { userId: Number }
     const toast = useToast();
     const reconnectTimeout = useRef(null);
-    const userRef = useRef(user); // Latest user in ref to avoid effect recreation
+    const userRef = useRef(user); // Persistence ref to access latest user state in async callbacks
 
+    // Synchronize ref with user state
     useEffect(() => {
         userRef.current = user;
     }, [user]);
 
+    /**
+     * Fetches unread message counts from the backend API.
+     */
     const fetchUnreadCounts = useCallback(async () => {
         try {
             const res = await api.get('/chat/unread-counts');
@@ -28,6 +35,10 @@ export const ChatProvider = ({ children }) => {
         }
     }, []);
 
+    /**
+     * Marks messages from a specific sender as read.
+     * @param {number} senderId - The ID of the user whose messages are read.
+     */
     const markAsRead = useCallback(async (senderId) => {
         try {
             await api.put(`/chat/read/${senderId}`);
@@ -40,23 +51,30 @@ export const ChatProvider = ({ children }) => {
         }
     }, []);
 
+    /**
+     * Centralized message handler for both sent and received messages.
+     * Updates local state and triggers notifications.
+     */
     const handleNewMessage = useCallback((msg) => {
         const currentUser = userRef.current;
         if (!currentUser) return;
 
+        // Determine which conversation thread this message belongs to
         const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
 
         setMessages(prev => {
-            const current = prev[otherId] || [];
-            if (current.some(m => m.id === msg.id)) return prev;
+            const currentThread = prev[otherId] || [];
+            // De-duplication check
+            if (currentThread.some(m => m.id === msg.id)) return prev;
             return {
                 ...prev,
-                [otherId]: [...current, msg]
+                [otherId]: [...currentThread, msg]
             };
         });
 
+        // Trigger notification if message is incoming
         if (msg.sender_id !== currentUser.id) {
-            toast.info(`New message from user ${msg.sender_id}`);
+            toast.info(`New message from ${msg.sender_id}`);
             setUnreadCounts(prev => ({
                 ...prev,
                 [msg.sender_id]: (prev[msg.sender_id] || 0) + 1
@@ -64,57 +82,60 @@ export const ChatProvider = ({ children }) => {
         }
     }, [toast]);
 
+    /**
+     * Initializes and manages the WebSocket connection lifecycle.
+     */
     const connect = useCallback(() => {
         if (!userRef.current) return;
 
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        // Close existing if any
-        if (socket && socket.readyState === WebSocket.OPEN) {
+        // Prevent redundant connections
+        if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
             return;
         }
 
-        const apiBase = import.meta.env.VITE_API_URL || "https://employee-management-system-3yhf.onrender.com";
-        const wsUrl = apiBase.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
-        const ws = new WebSocket(`${wsUrl}/api/v1/chat/ws?token=${token}`);
+        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const wsProtocol = apiBase.startsWith('https') ? 'wss://' : 'ws://';
+        const wsHost = apiBase.replace(/^https?:\/\//, '');
+        const wsUrl = `${wsProtocol}${wsHost}/api/v1/chat/ws?token=${token}`;
+        
+        const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            console.log('Chat Connected');
+            console.log('Chat Real-time Engine: Connected');
+            if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
         };
 
         ws.onmessage = (event) => {
             const payload = JSON.parse(event.data);
             if (payload.type === 'new_message') {
-                const msg = payload.data;
-                handleNewMessage(msg);
+                handleNewMessage(payload.data);
             }
         };
 
-        ws.onclose = () => {
-            console.log('Chat Disconnected');
+        ws.onclose = (event) => {
+            console.warn('Chat Real-time Engine: Disconnected', event.reason);
             setSocket(null);
+            // Exponential backoff or simple retry
             reconnectTimeout.current = setTimeout(connect, 3000);
+        };
+
+        ws.onerror = (err) => {
+            console.error('Chat WebSocket Error:', err);
         };
 
         setSocket(ws);
     }, [handleNewMessage]);
 
+    /**
+     * Transmits a message through the active WebSocket channel.
+     */
     const sendMessage = useCallback((receiverId, content) => {
-        // Need to access current socket instance. 
-        // Since socket is state, we might need a ref or access via closure if we depend on it.
-        // But better is to just check the state if it's in scope, but due to useCallback we need dependency.
-        // Actually, we can use the 'socket' from state if we add it to dependency.
-        // But if socket changes (reconnect), sendMessage changes, causing children re-render. acceptable.
-
-        // Wait, inside useCallback, 'socket' might be stale if not in dependency.
-        // But we can also use a Ref for socket to keep sendMessage stable!
-        // Let's rely on state which is fine.
-    }, [socket, toast]);
-
-    const sendMessageReal = useCallback((receiverId, content) => {
         if (!socket || socket.readyState !== WebSocket.OPEN) {
-            toast.error("Chat disconnected. Trying to reconnect...");
+            toast.error("Network issue: Chat disconnected. Reconnecting...");
+            connect(); // Attempt immediate reconnection
             return;
         }
 
@@ -124,51 +145,59 @@ export const ChatProvider = ({ children }) => {
             content: content
         };
         socket.send(JSON.stringify(payload));
-    }, [socket, toast]);
+    }, [socket, toast, connect]);
 
+    /**
+     * Loads previous message history for a specific conversation.
+     */
     const loadHistory = useCallback(async (userId) => {
         try {
             const res = await api.get(`/chat/history/${userId}`);
-            const history = res.data;
-
             setMessages(prev => ({
                 ...prev,
-                [userId]: history
+                [userId]: res.data
             }));
         } catch (error) {
             console.error("Failed to load chat history", error);
         }
     }, []);
 
+    // Effect to manage connection lifecycle based on authentication status
     useEffect(() => {
         if (user) {
             connect();
             fetchUnreadCounts();
         }
         return () => {
-            // Cleanup if needed, but we keep socket open usually
             if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-            // We can close socket here if we want strict cleanup
-            // if (socket) socket.close();
+            // Explicitly close socket on logout/unmount
+            // if (socket) socket.close(); 
         };
     }, [user, connect, fetchUnreadCounts]);
 
-    const value = useMemo(() => ({
+    // Context value memoization for performance
+    const contextValue = useMemo(() => ({
         socket,
         messages,
-        sendMessage: sendMessageReal,
+        sendMessage,
         setMessages,
         loadHistory,
         unreadCounts,
         setUnreadCounts,
         markAsRead
-    }), [socket, messages, sendMessageReal, loadHistory, unreadCounts, markAsRead]);
+    }), [socket, messages, sendMessage, loadHistory, unreadCounts, markAsRead]);
 
     return (
-        <ChatContext.Provider value={value}>
+        <ChatContext.Provider value={contextValue}>
             {children}
         </ChatContext.Provider>
     );
 };
 
-export const useChat = () => useContext(ChatContext);
+export const useChat = () => {
+    const context = useContext(ChatContext);
+    if (!context) {
+        throw new Error("useChat must be used within a ChatProvider");
+    }
+    return context;
+};

@@ -97,6 +97,7 @@ class TaskStatus(str, enum.Enum):
 class Task(Base):
     """
     Task model for work assignment and tracking.
+    Facilitates project management by linking assigned tasks between users.
     """
     __tablename__ = "tasks"
 
@@ -107,11 +108,13 @@ class Task(Base):
     priority = Column(String, default="medium")
     due_date = Column(Date, nullable=True)
     
+    # Foreign keys for task assignments
     assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     assigned_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # ORM Relationships for easier access to user details
     assigned_to = relationship("User", foreign_keys=[assigned_to_id], backref="tasks_assigned")
     assigned_by = relationship("User", foreign_keys=[assigned_by_id], backref="tasks_created")
 

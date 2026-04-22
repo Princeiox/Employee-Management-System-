@@ -1,35 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { User, Mail, Briefcase, Building, Shield, Calendar, MapPin, Phone, MessageSquare, ChevronLeft, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
+
+const ProfileItem = ({ icon: Icon, label, value }) => (
+    <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm">
+        <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+            <Icon className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{label}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{value || 'Not Specified'}</p>
+        </div>
+    </div>
+);
 
 const PublicProfile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user: currentUser } = useAuth();
     const [targetUser, setTargetUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                setLoading(true);
-                const res = await api.get(`/users/${id}`);
-                setTargetUser(res.data);
-            } catch (err) {
-                console.error("Failed to fetch user profile", err);
-                setError("Could not load user profile");
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchUserData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await api.get(`/users/${id}`);
+            setTargetUser(res.data);
+        } catch (err) {
+            console.error("Failed to fetch user profile", err);
+            setError("Could not load user profile");
+        } finally {
+            setLoading(false);
+        }
+    }, [id]);
 
+    useEffect(() => {
         if (id) {
             fetchUserData();
         }
-    }, [id]);
+    }, [id, fetchUserData]);
 
     if (loading) return (
         <div className="h-96 flex items-center justify-center">
@@ -43,18 +53,6 @@ const PublicProfile = () => {
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Profile Not Found</h2>
             <p className="text-slate-500 mb-6">{error || "The user profile you're looking for doesn't exist."}</p>
             <button onClick={() => navigate(-1)} className="btn-primary px-6">Go Back</button>
-        </div>
-    );
-
-    const ProfileItem = ({ icon: Icon, label, value }) => (
-        <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm">
-            <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                <Icon className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{label}</p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{value || 'Not Specified'}</p>
-            </div>
         </div>
     );
 
@@ -128,7 +126,7 @@ const PublicProfile = () => {
                 </div>
             </div>
 
-            {/* About Section (Placeholder for now) */}
+            {/* About Section */}
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-4">Professional Overview</h3>
                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed">

@@ -30,7 +30,7 @@ const Shortcuts = () => {
         try {
             const res = await api.get('/shortcuts/');
             setShortcuts(res.data);
-        } catch (error) {
+        } catch (_) {
             console.error("Failed to fetch shortcuts");
         } finally {
             setLoading(false);
@@ -53,7 +53,7 @@ const Shortcuts = () => {
             setFormData({ title: '', url: '', icon_type: 'Globe' });
             fetchShortcuts();
             toast.success("Shortcut added successfully");
-        } catch (error) {
+        } catch (_) {
             toast.error("Failed to add shortcut");
         }
     };
@@ -63,7 +63,7 @@ const Shortcuts = () => {
             await api.delete(`/shortcuts/${id}`);
             fetchShortcuts();
             toast.success("Shortcut removed");
-        } catch (error) {
+        } catch (_) {
             toast.error("Failed to remove shortcut");
         }
     };
@@ -208,7 +208,7 @@ const Shortcuts = () => {
     );
 };
 
-const ShortcutCard = ({ title, url, icon: Icon, color, bg, isDefault }) => (
+const ShortcutCard = ({ title, url, icon: IconComponent, color, bg, isDefault }) => (
     <a
         href={url}
         target="_blank"
@@ -216,7 +216,7 @@ const ShortcutCard = ({ title, url, icon: Icon, color, bg, isDefault }) => (
         className="block bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:border-blue-500/50 dark:hover:border-blue-500/30 transition-all duration-300 group overflow-hidden relative"
     >
         <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300`}>
-            <Icon className={`h-7 w-7 ${color}`} />
+            <IconComponent className={`h-7 w-7 ${color}`} />
         </div>
         <div className="flex items-center justify-between">
             <h4 className="font-bold text-slate-900 dark:text-white pr-2 truncate">{title}</h4>

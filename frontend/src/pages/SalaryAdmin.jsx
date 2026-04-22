@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
-import { IndianRupee, CreditCard, ChevronDown, Save, User as UserIcon, Search } from 'lucide-react';
+import { IndianRupee, Save, Search } from 'lucide-react';
 
 const SalaryAdmin = () => {
-    const { user } = useAuth();
     const [employees, setEmployees] = useState([]);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [salaryData, setSalaryData] = useState({
@@ -20,17 +18,7 @@ const SalaryAdmin = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const toast = useToast();
 
-    useEffect(() => {
-        fetchEmployees();
-    }, []);
-
-    useEffect(() => {
-        if (selectedEmployee) {
-            fetchSalary(selectedEmployee.id);
-        }
-    }, [selectedEmployee]);
-
-    const fetchEmployees = async () => {
+    const fetchEmployees = useCallback(async () => {
         try {
             const res = await api.get('/users/');
             setEmployees(res.data.filter(u => u.role === 'employee'));
@@ -38,12 +26,11 @@ const SalaryAdmin = () => {
         } catch (error) {
             console.error(error);
         }
-    };
+    }, []);
 
-    const fetchSalary = async (userId) => {
+    const fetchSalary = useCallback(async (userId) => {
         try {
             const res = await api.get(`/salary/user/${userId}`);
-            // If res.data.id === 0, it's a dummy, keep 0s. Else populate
             if (res.data.id) {
                 setSalaryData({
                     basic_salary: res.data.basic_salary,
@@ -59,9 +46,19 @@ const SalaryAdmin = () => {
                 });
             }
         } catch (error) {
-            console.error("Failed to fetch salary");
+            console.error("Failed to fetch salary", error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchEmployees();
+    }, [fetchEmployees]);
+
+    useEffect(() => {
+        if (selectedEmployee) {
+            fetchSalary(selectedEmployee.id);
+        }
+    }, [selectedEmployee, fetchSalary]);
 
     const handleSalaryChange = (e) => {
         setSalaryData({ ...salaryData, [e.target.name]: e.target.value });
@@ -71,7 +68,6 @@ const SalaryAdmin = () => {
         e.preventDefault();
         if (!selectedEmployee) return;
 
-        // Ensure numeric values before sending
         const payload = {
             user_id: selectedEmployee.id,
             basic_salary: Number(salaryData.basic_salary) || 0,
@@ -100,6 +96,8 @@ const SalaryAdmin = () => {
         e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) return <div className="p-8 text-center text-slate-500 animate-pulse">Loading employees...</div>;
 
     return (
         <div className="flex h-[calc(100vh-8rem)] gap-6">
@@ -152,7 +150,6 @@ const SalaryAdmin = () => {
                         </div>
 
                         <form onSubmit={handleSave} className="space-y-8">
-                            {/* Earnings */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
                                     <div className="w-1 h-4 bg-emerald-500 rounded-full"></div> Earnings
@@ -182,7 +179,6 @@ const SalaryAdmin = () => {
                                 </div>
                             </div>
 
-                            {/* Deductions */}
                             <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
                                     <div className="w-1 h-4 bg-red-500 rounded-full"></div> Deductions
@@ -212,7 +208,6 @@ const SalaryAdmin = () => {
                                 </div>
                             </div>
 
-                            {/* Summary */}
                             <div className="bg-slate-900 rounded-xl p-6 text-white grid grid-cols-3 divide-x divide-slate-700">
                                 <div className="text-center px-4">
                                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Gross Earnings</p>
