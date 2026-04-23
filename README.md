@@ -101,15 +101,7 @@ Perfect Systems is a modern, full-stack HR management platform designed to strea
 
    The application is available at `https://employee-management-system-princeioxs-projects.vercel.app` (Production) or `http://localhost:5173` (Local)
 
-## 🔑 Default Login Credentials
 
-### HR Account (Administrator)
-- Email: `hr@example.com`
-- Password: `hr123`
-
-### Employee Account
-- Email: `employee@example.com` 
-- Password: `emp123`
 
 ## 📁 Project Structure
 
